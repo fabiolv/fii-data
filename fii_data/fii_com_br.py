@@ -64,22 +64,51 @@ def parse_html(soup:BeautifulSoup, label_elem:str, label_class:str, label_text:s
 #     return dividend_yield
 
 def get_price(soup: BeautifulSoup) -> str:
-    price_div = soup.find('div', class_='item quotation')
-    price = price_div.find_next('span', class_='value').text
+    price_span = soup.find('span', class_='value')
+    price = price_span.text
     price = price.replace(',', '.')
     return price
 
 def get_fund_name(soup: BeautifulSoup) -> str:
-    name_elem = soup.find('h2', id='fund-name')
-    name = name_elem.text.upper()
+    ticker_h1 = soup.find('h1')
+    name = ticker_h1.find_next('p').text.strip().upper()
     return name
 
 def get_value_per_share(soup: BeautifulSoup) -> str:
-    vps = parse_html(soup, label_elem='h3', label_class='title', \
-                label_text='Valor Patrimonial por Cota', \
-                value_elem='h3', value_class='value')
-    vps = vps.replace('R$', '').replace(',', '.')
+    vps_p = soup.find('p', text='Val. Patrimonial p/Cota')
+    vps_value = vps_p.find_previous('p').text
+    vps = vps_value.replace('R$', '').replace(',', '.').strip()
     return vps
+
+def get_number_investors(soup: BeautifulSoup) -> str:
+    investors_p = soup.find('p', text='N° de Cotistas')
+    investors = investors_p.find_previous('p').text
+    investors = investors.replace('.', '')
+    return investors
+
+def get_cnpj(soup: BeautifulSoup) -> str:
+    cnpj_span = soup.find('span', text='CNPJ')
+    cnpj = cnpj_span.find_next('b').text
+    cnpj = cnpj.replace('.', '').replace('-', '').replace('/', '')
+    return cnpj
+
+def get_total_shares(soup: BeautifulSoup) -> str:
+    shares_span = soup.find('span', text='Número de Cotas')
+    shares = shares_span.find_next('b').text
+    shares = shares.replace('.', '')
+    return shares
+
+def get_dy(soup: BeautifulSoup) -> str:
+    dy_p = soup.find('p', text='Dividend Yield')
+    dy = dy_p.find_previous('b').text
+    dy = dy.replace(',', '.')
+    return dy
+
+def get_last_dividend(soup: BeautifulSoup) -> str:
+    last_dividend_p = soup.find('p', text='Último Rendimento')
+    last_dividend = last_dividend_p.find_previous('b').text
+    last_dividend = last_dividend.replace(',', '.')
+    return last_dividend
 
 def get_fii_info(ticker: str) -> dict:
     try:
@@ -96,13 +125,18 @@ def get_fii_info(ticker: str) -> dict:
             'ticker': ticker,
             'name': get_fund_name(soup),
             'price': get_price(soup),
-            'value_per_share': get_value_per_share(soup)
+            'value_per_share': get_value_per_share(soup),
+            'investors': get_number_investors(soup),
+            'cnpj': get_cnpj(soup),
+            'total_shares': get_total_shares(soup),
+            'dividend_yield': get_dy(soup),
+            'last_dividend': get_last_dividend(soup),
         }
         # fii_info['PVP'] = round(float(fii_info['price']) / float(fii_info['value_per_share']), 2)
     except HTMLPaseError as err:
         return {'message': err.message,
                 'error': True}
-
+    
     return fii_info
 
 if __name__ == '__main__':

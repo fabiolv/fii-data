@@ -11,10 +11,10 @@ def fii_root():
 @fii_com_br_blueprint.route('/fii/<ticker>')
 def get_ticker_info(ticker:str):
     format = request.args.get('format', default='JSON', type=str)
-    print('-*'*20)
+    print('-*' * 20)
     print(f'---> Request for /fii/{ticker}')
     print(f'format query string: {format}')
-    print('-*'*20)
+    print('-*' * 20)
 
     ticker_info = get_fii_info(ticker.upper())
 
